@@ -32,7 +32,7 @@ public class TestActiveDirectoryMultithread {
 		try {
 			Principal principal = new Principal(principalIn);
 			List<ActiveDirectoryContext> contexts = new LinkedList<>();
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < numThreads; i++) {
 				contexts.add(provider.getActiveDirectoryContext(providerUrl, Optional.of(ActiveDirectoryAuthenticationMethods.SIMPLE)
 					, principal, password));
 			}

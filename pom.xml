@@ -5,7 +5,7 @@
 	<artifactId>Simple-AD</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Simple Active Directory</name>
-	<url>http://maven.apache.org</url>
+	<url>https://github.com/agiles231/SimpleActiveDirectory4j</url>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
