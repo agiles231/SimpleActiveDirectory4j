@@ -3,7 +3,7 @@
 
 Simplify connecting to Active Directory and use more standard data structures.
 
-Example:
+Example of searching AD using multithreading:
 ```java
 package some.package;
 
@@ -34,14 +34,14 @@ public class Example {
 	public static void main(String[] args) throws InterruptedException, ExecutionException, NamingException {
 		ActiveDirectoryContextProvider provider = new ActiveDirectoryContextProvider(Optional.empty());
 		int numThreads = 2;
-		String providerUrl = "ldaps://an-ad-controller.domain.com;
+		String providerUrl = "ldaps://an-ad-controller.domain.com:636;
 		String principalIn = "MrAdmin";
 		String password = "password";
 		String searchBase = "dc=domain,dc=com";
 		String[] searchVals = {"aGuy@domain.com", "aDifferentGuy@domain.com"};
 		Principal principal = new Principal(principalIn);
 		List<ActiveDirectoryContext> contexts = new LinkedList<>();
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < numThreads; i++) {
 			contexts.add(provider.getActiveDirectoryContext(providerUrl, Optional.of(ActiveDirectoryAuthenticationMethods.SIMPLE)
 				, principal, password));
 		}
