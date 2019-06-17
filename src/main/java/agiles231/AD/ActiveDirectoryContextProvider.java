@@ -20,7 +20,7 @@ public class ActiveDirectoryContextProvider {
 	public ActiveDirectoryContextProvider(Optional<String> keystore) {
 		this.keystore = keystore;
 	}
-	public ActiveDirectoryContext getActiveDirectoryContext(String providerUrl, Optional<String> authenticationMethod, Principal principal, String credentials) throws NamingException {
+	public synchronized ActiveDirectoryContext getActiveDirectoryContext(String providerUrl, Optional<String> authenticationMethod, Principal principal, String credentials) throws NamingException {
 		Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
 		keystore.ifPresent(k -> System.setProperty("javax.net.ssl.trustStore", k));
 		ldapEnvironment = new Hashtable<String, String>();

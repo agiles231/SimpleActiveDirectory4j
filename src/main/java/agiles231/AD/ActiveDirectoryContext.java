@@ -1,22 +1,20 @@
 package agiles231.AD;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
 
 import agiles231.AD.naming.ActiveDirectoryName;
 import agiles231.AD.search.ActiveDirectoryFilter;
+import agiles231.AD.search.SearchResult;
+import agiles231.AD.util.AttributesListConverter;
+import agiles231.AD.util.NamingEnumerationListConverter;
 
 /***
  * Wrapper around JNDI DirContext. DirContext provides
@@ -33,6 +31,14 @@ public class ActiveDirectoryContext {
 
 	public ActiveDirectoryContext(DirContext context) {
 		this.context = context;
+	}
+	
+	public List<agiles231.AD.attribute.Attribute> getAttributes(ActiveDirectoryName name) throws NamingException {
+		return AttributesListConverter.convertToList(context.getAttributes(name.getName()));
+	}
+	
+	public ActiveDirectoryContext getSchema(ActiveDirectoryName name) throws NamingException {
+		return new ActiveDirectoryContext(context.getSchema(name.getName()));
 	}
 	
 	/**
@@ -56,8 +62,8 @@ public class ActiveDirectoryContext {
 	 * @param object
 	 * @throws NamingException
 	 */
-	public synchronized void addObjectWithAttributes(ActiveDirectoryName name, Serializable object, Attribute[] attributes) throws NamingException {
-		Attributes attrs = getAttributesFromArray(attributes);
+	public synchronized void addObjectWithAttributes(ActiveDirectoryName name, Serializable object, List<agiles231.AD.attribute.Attribute> attributes) throws NamingException {
+		Attributes attrs = AttributesListConverter.convertToAttributes(attributes);
 		context.bind(name.getName(), object, attrs);
 	}
 	
@@ -83,8 +89,8 @@ public class ActiveDirectoryContext {
 	 * @param object
 	 * @throws NamingException
 	 */
-	public synchronized void addOrReplaceObjectWithAttributes(ActiveDirectoryName name, Serializable object, Attribute[] attributes) throws NamingException {
-		Attributes attrs = getAttributesFromArray(attributes);
+	public synchronized void addOrReplaceObjectWithAttributes(ActiveDirectoryName name, Serializable object, List<agiles231.AD.attribute.Attribute> attributes) throws NamingException {
+		Attributes attrs = AttributesListConverter.convertToAttributes(attributes);
 		context.rebind(name.getName(), object, attrs);
 	}
 	
@@ -107,7 +113,8 @@ public class ActiveDirectoryContext {
 	 * @throws NamingException
 	 */
 	public synchronized List<SearchResult> search(ActiveDirectoryName name, ActiveDirectoryFilter filter, SearchControls cons) throws NamingException {
-		return listifyResults(context.search(name.getName(), filter.toLdapString(), cons));
+		List<javax.naming.directory.SearchResult> results = NamingEnumerationListConverter.listifyNamingEnumeration(context.search(name.getName(), filter.toLdapString(), cons));
+		return results.stream().map(r -> new SearchResult(r)).collect(Collectors.toList());
 	}
 	
 	/**
@@ -118,9 +125,10 @@ public class ActiveDirectoryContext {
 	 * @return
 	 * @throws NamingException
 	 */
-	public synchronized List<SearchResult> search(ActiveDirectoryName name, Attribute[] attributes) throws NamingException {
-		Attributes attrs = getAttributesFromArray(attributes);
-		return listifyResults(context.search(name.getName(), attrs));
+	public synchronized List<SearchResult> search(ActiveDirectoryName name, List<agiles231.AD.attribute.Attribute> attributes) throws NamingException {
+		Attributes attrs = AttributesListConverter.convertToAttributes(attributes);
+		List<javax.naming.directory.SearchResult> results = NamingEnumerationListConverter.listifyNamingEnumeration(context.search(name.getName(), attrs));
+		return results.stream().map(r -> new SearchResult(r)).collect(Collectors.toList());
 	}
 
 	/**
@@ -132,9 +140,10 @@ public class ActiveDirectoryContext {
 	 * @return
 	 * @throws NamingException
 	 */
-	public synchronized List<SearchResult> search(ActiveDirectoryName name, Attribute[] attributes, String[] returnValues) throws NamingException {
-		Attributes attrs = getAttributesFromArray(attributes);
-		return listifyResults(context.search(name.getName(), attrs, returnValues));
+	public synchronized List<SearchResult> search(ActiveDirectoryName name, List<agiles231.AD.attribute.Attribute> attributes, String[] returnValues) throws NamingException {
+		Attributes attrs = AttributesListConverter.convertToAttributes(attributes);
+		List<javax.naming.directory.SearchResult> results = NamingEnumerationListConverter.listifyNamingEnumeration(context.search(name.getName(), attrs, returnValues));
+		return results.stream().map(r -> new SearchResult(r)).collect(Collectors.toList());
 	}
 	
 	/**
@@ -156,20 +165,4 @@ public class ActiveDirectoryContext {
 		context.close();
 	}
 	
-	private final List<SearchResult> listifyResults(NamingEnumeration<SearchResult> results) throws NamingException {
-		List<SearchResult> ret = new LinkedList<SearchResult>();
-		while (results.hasMoreElements()) {
-			SearchResult result = results.next();
-			ret.add(result);
-		}
-		return ret;
-	}
-	
-	private final Attributes getAttributesFromArray(Attribute[] attributes) throws NamingException {
-		Attributes attrs = new BasicAttributes();
-		for (Attribute attribute : attributes) {
-			attrs.put(attribute.getID(), attribute.get());
-		}
-		return attrs;
-	}
 }
